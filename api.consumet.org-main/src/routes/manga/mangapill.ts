@@ -1,21 +1,20 @@
 import { FastifyRequest, FastifyReply, FastifyInstance, RegisterOptions } from 'fastify';
 import { MANGA } from '@consumet/extensions';
-
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
-  const mangakakalot = new MANGA.MangaKakalot();
+  const mangapill = new MANGA.MangaPill();
 
   fastify.get('/', (_, rp) => {
     rp.status(200).send({
-      intro: `Welcome to the MangaKakalot provider: check out the provider's website @ ${mangakakalot.toString.baseUrl}`,
+      intro: `Welcome to the Mangapill provider: check out the provider's website @ ${mangapill.toString.baseUrl}`,
       routes: ['/:query', '/info', '/read'],
-      documentation: 'https://docs.consumet.org/#tag/mangakakalot',
+      documentation: 'https://docs.consumet.org/#tag/mangapill',
     });
   });
 
   fastify.get('/:query', async (request: FastifyRequest, reply: FastifyReply) => {
     const query = (request.params as { query: string }).query;
 
-    const res = await mangakakalot.search(query);
+    const res = await mangapill.search(query);
 
     reply.status(200).send(res);
   });
@@ -27,9 +26,7 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
       return reply.status(400).send({ message: 'id is required' });
 
     try {
-      const res = await mangakakalot
-        .fetchMangaInfo(id)
-        .catch((err) => reply.status(404).send({ message: err }));
+      const res = await mangapill.fetchMangaInfo(id);
 
       reply.status(200).send(res);
     } catch (err) {
@@ -41,17 +38,13 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
   fastify.get('/read', async (request: FastifyRequest, reply: FastifyReply) => {
     const chapterId = (request.query as { chapterId: string }).chapterId;
-    const mangaId = (request.query as { mangaId: string }).mangaId;
 
     if (typeof chapterId === 'undefined')
       return reply.status(400).send({ message: 'chapterId is required' });
 
-    if (typeof mangaId === 'undefined')
-      return reply.status(400).send({ message: 'mangaId is required' });
-
     try {
-      const res = await mangakakalot
-        .fetchChapterPages(chapterId,mangaId)
+      const res = await mangapill
+        .fetchChapterPages(chapterId)
         .catch((err: Error) => reply.status(404).send({ message: err.message }));
 
       reply.status(200).send(res);

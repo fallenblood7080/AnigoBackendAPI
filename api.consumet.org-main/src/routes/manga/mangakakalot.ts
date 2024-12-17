@@ -41,17 +41,13 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
 
   fastify.get('/read', async (request: FastifyRequest, reply: FastifyReply) => {
     const chapterId = (request.query as { chapterId: string }).chapterId;
-    const mangaId = (request.query as { mangaId: string }).mangaId;
 
     if (typeof chapterId === 'undefined')
       return reply.status(400).send({ message: 'chapterId is required' });
 
-    if (typeof mangaId === 'undefined')
-      return reply.status(400).send({ message: 'mangaId is required' });
-
     try {
       const res = await mangakakalot
-        .fetchChapterPages(chapterId,mangaId)
+        .fetchChapterPages(chapterId)
         .catch((err: Error) => reply.status(404).send({ message: err.message }));
 
       reply.status(200).send(res);

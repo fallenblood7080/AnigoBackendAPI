@@ -12,13 +12,13 @@ import { redis } from "../../main";
 import { Redis } from "ioredis";
 
 const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
-    const movieshd = new MOVIES.MovieHdWatch();
+    const goku = new MOVIES.Goku();
     fastify.get("/", (_, rp) => {
         rp.status(200).send({
             intro:
-                "Welcome to the movieshd provider: check out the provider's website @ https://movieshd.watch",
+                "Welcome to the goku provider: check out the provider's website @ https://goku.sx",
             routes: ['/:query', '/info', '/watch','/recent-shows','/recent-movies','/trending','/servers','/country','/genre'],
-            documentation: "https://docs.consumet.org/#tag/movieshd",
+            documentation: "https://docs.consumet.org/#tag/goku",
         });
     });
 
@@ -34,11 +34,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
             let res = redis
                 ? await cache.fetch(
                     redis as Redis,
-                    `movieshd:${query}:${page}`,
-                    async () => await movieshd.search(query, page ? page : 1),
+                    `goku:${query}:${page}`,
+                    async () => await goku.search(query, page ? page : 1),
                     60 * 60 * 6
                 )
-                : await movieshd.search(query, page ? page : 1);
+                : await goku.search(query, page ? page : 1);
 
             reply.status(200).send(res);
         }
@@ -50,11 +50,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
             let res = redis
                 ? await cache.fetch(
                     redis as Redis,
-                    `movieshd:recent-shows`,
-                    async () => await movieshd.fetchRecentTvShows(),
+                    `goku:recent-shows`,
+                    async () => await goku.fetchRecentTvShows(),
                     60 * 60 * 3
                 )
-                : await movieshd.fetchRecentTvShows();
+                : await goku.fetchRecentTvShows();
 
             reply.status(200).send(res);
         }
@@ -66,11 +66,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
             let res = redis
                 ? await cache.fetch(
                     redis as Redis,
-                    `movieshd:recent-movies`,
-                    async () => await movieshd.fetchRecentMovies(),
+                    `goku:recent-movies`,
+                    async () => await goku.fetchRecentMovies(),
                     60 * 60 * 3
                 )
-                : await movieshd.fetchRecentMovies();
+                : await goku.fetchRecentMovies();
 
             reply.status(200).send(res);
         }
@@ -84,8 +84,8 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
                 if (!type) {
                     const res = {
                         results: [
-                            ...(await movieshd.fetchTrendingMovies()),
-                            ...(await movieshd.fetchTrendingTvShows()),
+                            ...(await goku.fetchTrendingMovies()),
+                            ...(await goku.fetchTrendingTvShows()),
                         ],
                     };
                     return reply.status(200).send(res);
@@ -94,16 +94,16 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
                 let res = redis
                     ? await cache.fetch(
                         redis as Redis,
-                        `movieshd:trending:${type}`,
+                        `goku:trending:${type}`,
                         async () =>
                             type === "tv"
-                                ? await movieshd.fetchTrendingTvShows()
-                                : await movieshd.fetchTrendingMovies(),
+                                ? await goku.fetchTrendingTvShows()
+                                : await goku.fetchTrendingMovies(),
                         60 * 60 * 3
                     )
                     : type === "tv"
-                        ? await movieshd.fetchTrendingTvShows()
-                        : await movieshd.fetchTrendingMovies();
+                        ? await goku.fetchTrendingTvShows()
+                        : await goku.fetchTrendingMovies();
 
                 reply.status(200).send(res);
             } catch (error) {
@@ -127,11 +127,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
             let res = redis
                 ? await cache.fetch(
                     redis as Redis,
-                    `movieshd:info:${id}`,
-                    async () => await movieshd.fetchMediaInfo(id),
+                    `goku:info:${id}`,
+                    async () => await goku.fetchMediaInfo(id),
                     60 * 60 * 3
                 )
-                : await movieshd.fetchMediaInfo(id);
+                : await goku.fetchMediaInfo(id);
 
             reply.status(200).send(res);
         } catch (err) {
@@ -160,12 +160,12 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
                 let res = redis
                     ? await cache.fetch(
                         redis as Redis,
-                        `movieshd:watch:${episodeId}:${mediaId}:${server}`,
+                        `goku:watch:${episodeId}:${mediaId}:${server}`,
                         async () =>
-                            await movieshd.fetchEpisodeSources(episodeId, mediaId, server),
+                            await goku.fetchEpisodeSources(episodeId, mediaId, server),
                         60 * 30
                     )
-                    : await movieshd.fetchEpisodeSources(episodeId, mediaId, StreamingServers.VidCloud);
+                    : await goku.fetchEpisodeSources(episodeId, mediaId, StreamingServers.VidCloud);
                 reply.status(200).send(res);
             } catch (err) {
                 reply
@@ -180,21 +180,15 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
         async (request: FastifyRequest, reply: FastifyReply) => {
             const episodeId = (request.query as { episodeId: string }).episodeId;
             const mediaId = (request.query as { mediaId: string }).mediaId;
-
-            if (typeof episodeId === "undefined")
-                return reply.status(400).send({ message: "episodeId is required" });
-            if (typeof mediaId === "undefined")
-                return reply.status(400).send({ message: "mediaId is required" });
-            
             try {
                 let res = redis
                     ? await cache.fetch(
                         redis as Redis,
-                        `movieshd:servers:${episodeId}:${mediaId}`,
-                        async () => await movieshd.fetchEpisodeServers(episodeId, mediaId),
+                        `goku:servers:${episodeId}:${mediaId}`,
+                        async () => await goku.fetchEpisodeServers(episodeId, mediaId),
                         60 * 30
                     )
-                    : await movieshd.fetchEpisodeServers(episodeId, mediaId);
+                    : await goku.fetchEpisodeServers(episodeId, mediaId);
 
                 reply.status(200).send(res);
             } catch (error) {
@@ -213,11 +207,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
           let res = redis
             ? await cache.fetch(
               redis as Redis,
-              `movieshd:country:${country}:${page}`,
-              async () => await movieshd.fetchByCountry(country, page),
+              `goku:country:${country}:${page}`,
+              async () => await goku.fetchByCountry(country, page),
               60 * 60 * 3,
             )
-            : await movieshd.fetchByCountry(country, page);
+            : await goku.fetchByCountry(country, page);
     
           reply.status(200).send(res);
         } catch (error) {
@@ -236,11 +230,11 @@ const routes = async (fastify: FastifyInstance, options: RegisterOptions) => {
         let res = redis
           ? await cache.fetch(
             redis as Redis,
-            `movieshd:genre:${genre}:${page}`,
-            async () => await movieshd.fetchByGenre(genre, page),
+            `goku:genre:${genre}:${page}`,
+            async () => await goku.fetchByGenre(genre, page),
             60 * 60 * 3,
           )
-          : await movieshd.fetchByGenre(genre, page);
+          : await goku.fetchByGenre(genre, page);
     
         reply.status(200).send(res);
       } catch (error) {
